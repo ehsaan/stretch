@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Image Slideshow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@300;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --button-hover: #0ea5e9;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 90vw;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+        }
+
+        #slideshow-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.8s ease-in-out;
+            opacity: 0;
+        }
+
+        #slideshow-image.visible {
+            opacity: 1;
+        }
+
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 120px;
+            backdrop-filter: blur(4px);
+        }
+
+        button:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 6px;
+            background: var(--accent-color);
+            width: 0%;
+            box-shadow: 0 0 10px var(--accent-glow);
+            transition: width 1s linear;
+        }
+
+        .status-container {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #counter {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        #countdown {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Celebration Screen */
+        #celebration {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-color);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .celebration-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .emoji {
+            position: fixed;
+            top: -50px;
+            font-size: 2rem;
+            user-select: none;
+            pointer-events: none;
+            z-index: 101;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(105vh) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <img id="slideshow-image" src="" alt="Slideshow Image">
+        <div class="timer-bar" id="timer-bar"></div>
+        <div class="overlay" id="image-index">IMAGE 1 / 5</div>
+    </div>
+
+    <div class="status-container">
+        <div id="countdown">30s</div>
+        <div id="counter">NEXT IMAGE SOON</div>
+    </div>
+
+    <div class="controls">
+        <button id="prev-btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+        </button>
+        <button id="pause-btn">
+            <span id="pause-text">Pause</span>
+        </button>
+        <button id="next-btn">
+            Next
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+        <button id="test-sound-btn" style="min-width: 50px; font-size: 0.8rem; background: rgba(255,255,255,0.02);">
+            Test Sound
+        </button>
+    </div>
+
+    <div id="celebration">
+        <h1 class="celebration-text">Good girl, you did it!</h1>
+        <div style="font-size: 3rem;">🎉✨💖🌟</div>
+    </div>
+
+    <audio id="beep-audio" src="beep.ogg"></audio>
+
+    <script>
+        const IMAGES = [
+            'images/1.jpg',
+            'images/1.jpg',
+            'images/2.jpg',
+            'images/3.jpg',
+            'images/3.jpg',
+            'images/4.jpg',
+            'images/4.jpg',
+        ];
+
+        // Individual durations for each image in seconds
+        const DURATIONS = [15, 15, 30, 15, 15, 15, 15];
+        const BEEP_OFFSET = 3; // seconds before end
+
+        let currentIndex = 0;
+        let timeLeft = DURATIONS[currentIndex];
+        let isPaused = true; // Start paused
+        let hasStarted = false; // Flag for initial start
+        let beepPlayed = false;
+        let timerInterval = null;
+
+        const imgElement = document.getElementById('slideshow-image');
+        const timerBar = document.getElementById('timer-bar');
+        const countdownElement = document.getElementById('countdown');
+        const imageIndexElement = document.getElementById('image-index');
+        const pauseBtn = document.getElementById('pause-btn');
+        const beepAudio = document.getElementById('beep-audio');
+
+        // Preload audio
+        beepAudio.load();
+
+        function updateDisplay() {
+            console.log(`Switching to Image ${currentIndex + 1}`);
+
+            // Stop beep if playing
+            beepAudio.pause();
+            beepAudio.currentTime = 0;
+
+            imgElement.classList.remove('visible');
+            setTimeout(() => {
+                imgElement.src = IMAGES[currentIndex];
+                imgElement.onload = () => imgElement.classList.add('visible');
+                imageIndexElement.textContent = `IMAGE ${currentIndex + 1} / ${IMAGES.length}`;
+            }, 100);
+
+            resetTimer();
+        }
+
+        function resetTimer() {
+            timeLeft = DURATIONS[currentIndex];
+            beepPlayed = false;
+            updateTimerUI();
+        }
+
+        function updateTimerUI() {
+            const currentDuration = DURATIONS[currentIndex];
+            const progress = ((currentDuration - timeLeft) / currentDuration) * 100;
+            timerBar.style.width = `${progress}%`;
+            countdownElement.textContent = `${Math.ceil(timeLeft)}s`;
+        }
+
+        function nextImage() {
+            if (currentIndex === IMAGES.length - 1) {
+                showCelebration();
+                return;
+            }
+            currentIndex = (currentIndex + 1) % IMAGES.length;
+            updateDisplay();
+        }
+
+        function showCelebration() {
+            isPaused = true;
+            clearInterval(timerInterval);
+
+            // Hide slideshow
+            document.querySelector('.container').style.display = 'none';
+            document.querySelector('.status-container').style.display = 'none';
+            document.querySelector('.controls').style.display = 'none';
+
+            // Show celebration
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'flex';
+
+            startEmojiRain();
+        }
+
+        function startEmojiRain() {
+            const emojis = ['🎉', '✨', '💖', '🌟', '🎊', '🎈', '👸', '👏'];
+            setInterval(() => {
+                const emoji = document.createElement('div');
+                emoji.className = 'emoji';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = Math.random() * 100 + 'vw';
+                emoji.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                document.body.appendChild(emoji);
+
+                // Cleanup
+                setTimeout(() => emoji.remove(), 5000);
+            }, 300);
+        }
+
+        function prevImage() {
+            currentIndex = (currentIndex - 1 + IMAGES.length) % IMAGES.length;
+            updateDisplay();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            hasStarted = true;
+
+            pauseBtn.innerHTML = isPaused ?
+                '<span>Resume</span>' :
+                '<span>Pause</span>';
+
+            if (isPaused) {
+                pauseBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            } else {
+                pauseBtn.style.background = '';
+            }
+        }
+
+        function tick() {
+            if (isPaused) return;
+
+            timeLeft -= 1;
+
+            if (timeLeft <= BEEP_OFFSET && !beepPlayed) {
+                console.log("Attempting to play beep...");
+                beepAudio.play()
+                    .then(() => {
+                        console.log("Beep played successfully");
+                    })
+                    .catch(e => {
+                        console.error("Beep playback failed:", e);
+                        alert("Please click anywhere on the page to enable sound!");
+                    });
+                beepPlayed = true;
+                countdownElement.style.color = "#ff4444";
+            } else if (timeLeft > BEEP_OFFSET) {
+                countdownElement.style.color = "var(--accent-color)";
+            }
+
+            if (timeLeft <= 0) {
+                nextImage();
+            } else {
+                updateTimerUI();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('next-btn').addEventListener('click', () => {
+            nextImage();
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            prevImage();
+        });
+
+        pauseBtn.addEventListener('click', togglePause);
+
+        document.getElementById('test-sound-btn').addEventListener('click', () => {
+            console.log("Triggering Test Sound...");
+            beepAudio.currentTime = 0;
+            beepAudio.play().catch(e => {
+                console.error("Test Sound failed:", e);
+                alert("Audio blocked! Click anywhere first.");
+            });
+        });
+
+        // Start initial display but timer is paused
+        updateDisplay();
+        pauseBtn.innerHTML = '<span>Start</span>'; // Initial button text
+        timerInterval = setInterval(tick, 1000);
+
+        // More robust audio unlock for all common events
+        const unlockAudio = () => {
+            console.log("Unlocking audio context via user interaction...");
+            beepAudio.play().then(() => {
+                beepAudio.pause();
+                beepAudio.currentTime = 0;
+                console.log("Audio context unlocked.");
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+                document.removeEventListener('keydown', unlockAudio);
+            }).catch(e => {
+                console.error("Failed to unlock audio:", e);
+            });
+        };
+
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+    </script>
+</body>
+
+</html>
